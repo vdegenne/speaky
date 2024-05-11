@@ -1,14 +1,30 @@
 import {LitElement, PropertyValues, html} from 'lit';
-import {customElement, state} from 'lit/decorators.js';
+import {customElement, query, state} from 'lit/decorators.js';
 import {withStyles} from 'lit-with-styles';
 import styles from './app-shell.css?inline';
 import {materialShellLoadingOff} from 'material-shell';
-import {MdFilledTextField} from '@material/web/all.js';
+import type {MdFilledTextField} from '@material/web/all.js';
+
+const DESTROY_TIMEOUT_MS = 1500;
 
 @customElement('app-shell')
 @withStyles(styles)
 export class AppShell extends LitElement {
 	@state() content = '';
+	@state() remoteContent = '';
+
+	@query('[type=textarea]') textarea: MdFilledTextField;
+
+	destroyTimeout: number | undefined;
+
+	constructor() {
+		super();
+
+		fetch('/api/retrieve').then(async (response) => {
+			const {content} = await response.json();
+			this.remoteContent = content;
+		});
+	}
 
 	firstUpdated() {
 		materialShellLoadingOff.call(this);
@@ -23,29 +39,39 @@ export class AppShell extends LitElement {
 				@input=${(event: Event) => {
 					const target = event.target as MdFilledTextField;
 					this.content = target.value;
+					this.destroyTimeout = setTimeout(() => {
+						this.content = '';
+						this.textarea.focus();
+					}, DESTROY_TIMEOUT_MS);
 				}}
 			>
 				<md-icon-button
 					slot="trailing-icon"
 					@click=${() => {
 						this.content = '';
+						this.textarea.focus();
 					}}
 					><md-icon>close</md-icon></md-icon-button
 				>
 			</md-filled-text-field>
-			<md-text-button inert>${this.content}</md-text-button>
+			<md-text-button inert>${this.remoteContent}</md-text-button>
 		`;
 	}
 
-	updated(changed: PropertyValues<this>) {
+	async updated(changed: PropertyValues<this>) {
 		if (changed.has('content') && this.content) {
-			fetch('/api/save', {
-				method: 'POST',
-				headers: {
-					'content-type': 'application/json',
-				},
-				body: JSON.stringify({content: this.content}),
-			});
+			const parts = this.content.split(' ');
+			const content = parts.pop();
+			try {
+				await fetch('/api/save', {
+					method: 'POST',
+					headers: {
+						'content-type': 'application/json',
+					},
+					body: JSON.stringify({content}),
+				});
+				this.remoteContent = content;
+			} catch {}
 		}
 	}
 }

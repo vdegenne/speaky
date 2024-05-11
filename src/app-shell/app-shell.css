@@ -1,11 +1,15 @@
 :host {
-  position: absolute;
-  inset: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+	position: absolute;
+	inset: 12px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 20px;
+
+	--md-sys-typescale-body-large-size: 28px;
+	--md-sys-typescale-label-large-size: 22px;
 }
 
-[type="textarea"] {
-  width: 100%;
+[type='textarea'] {
+	width: 100%;
 }

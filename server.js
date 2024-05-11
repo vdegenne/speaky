@@ -6,6 +6,7 @@ import Router from '@koa/router';
 import {promises as fs} from 'fs';
 import koaStatic from 'koa-static';
 import {bodyParser} from '@koa/bodyparser';
+import cors from '@koa/cors';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +20,7 @@ const savedFilePath = path.join(__dirname, 'saved.txt');
 // Serve static files from ./docs directory
 app.use(koaStatic(docsPath));
 
+app.use(cors());
 app.use(bodyParser());
 
 // Middleware to ensure saved.txt always exists
